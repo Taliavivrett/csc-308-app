@@ -1,26 +1,11 @@
 // src/MyApp.jsx
 import React, { useState } from "react";
 import Table from "./Table";
+import Form from "./Form";
 
 // src/MyApp.jsx
 function MyApp() {
   const [characters, setCharacters] = useState([
-  {
-    name: "Charlie",
-    job: "Janitor"
-  },
-  {
-    name: "Mac",
-    job: "Bouncer"
-  },
-  {
-    name: "Dee",
-    job: "Aspring actress"
-  },
-  {
-    name: "Dennis",
-    job: "Bartender"
-  }
 ]);
 
 function removeOneCharacter(index) {
@@ -36,6 +21,7 @@ return (
       characterData={characters}
       removeCharacter={removeOneCharacter}
     />
+    <Form />
   </div>
  );
 }
