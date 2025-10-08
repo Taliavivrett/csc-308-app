@@ -24,12 +24,24 @@ function updateList(person) {
     });
 }
 
-  function removeOneCharacter(index) {
-    const updated = characters.filter((character, i) => {
-      return i !== index;
+function removeOneCharacter(index) {
+  const userToDelete = characters[index];
+  const url = `http://localhost:8000/users/${userToDelete.id}`;
+  fetch(url, { method: "DELETE" })
+    .then((res) => {
+      if (res.status === 200 || res.status === 204) {
+        const updated = characters.filter((_, i) => i !== index);
+        setCharacters(updated);
+      } else if (res.status === 404) {
+        console.error("User not found on backend.");
+      } else {
+        console.error("Failed to delete user. Status:", res.status);
+      }
+    })
+    .catch((error) => {
+      console.error("Error deleting user:", error);
     });
-    setCharacters(updated);
-  }
+}
 
   function fetchUsers() {
     const promise = fetch("http://localhost:8000/users");
