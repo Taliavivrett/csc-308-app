@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import mongoose from "mongoose";
 
 const app = express();
 const port = 8000;
@@ -7,45 +8,125 @@ const port = 8000;
 app.use(cors());
 app.use(express.json());
 
+mongoose.set("debug", true);
+
+mongoose
+  .connect("mongodb://localhost:27017/users", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB connected successfully!"))
+  .catch((error) => console.log("MongoDB connection error:", error));
+
+const userSchema = new mongoose.Schema({
+  name: String,
+  job: String,
+});
+
+const userModel = mongoose.model("User", userSchema);
+function addUser(user) {
+  const newUser = new userModel(user);
+  return newUser.save();
+}
+
+function getUsers() {
+  return userModel.find();
+}
+
+function findUserById(id) {
+  return userModel.findById(id);
+}
+
+function findUserByName(name) {
+  return userModel.find({ name });
+}
+
+function findUserByJob(job) {
+  return userModel.find({ job });
+}
+
+function findUserByNameAndJob(name, job) {
+  return userModel.find({ name, job });
+}
+
+function deleteUserById(id) {
+  return userModel.findByIdAndDelete(id);
+}
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
-});
-const users = {
-  users_list: [
-    {
-      id: "xyz789",
-      name: "Charlie",
-      job: "Janitor",
-    },
-    {
-      id: "abc123",
-      name: "Mac",
-      job: "Bouncer",
-    },
-    {
-      id: "ppp222",
-      name: "Mac",
-      job: "Professor",
-    },
-    {
-      id: "yat999",
-      name: "Dee",
-      job: "Aspring actress",
-    },
-    {
-      id: "zap555",
-      name: "Dennis",
-      job: "Bartender",
-    },
-  ],
-};
+app.get("/users", (req, res) => {
+  const { name, job } = req.query;
+  let promise;
 
-const findUserByName = (name) => {
-  return users["users_list"].filter((user) => user["name"] === name);
+  if (name && job) {
+    promise = findUserByNameAndJob(name, job);
+  } else if (name) {
+    promise = findUserByName(name);
+  } else if (job) {
+    promise = findUserByJob(job);
+  } else {
+    promise = getUsers();
+  }
+
+  promise
+    .then((users) => res.send({ users_list: users }))
+    .catch((error) => res.status(500).send({ message: error.message }));
+});
+
+app.post("/users", (req, res) => {
+  const userToAdd = req.body;
+
+  addUser(userToAdd)
+    .then((savedUser) => res.status(201).send(savedUser))
+    .catch((error) => res.status(400).send({ message: error.message }));
+});
+
+app.get("/users/:id", (req, res) => {
+  const { id } = req.params;
+
+  findUserById(id)
+    .then((user) => {
+      if (user) res.send(user);
+      else res.status(404).send({ message: "User not found" });
+    })
+    .catch((error) => res.status(500).send({ message: error.message }));
+});
+
+app.delete("/users/:id", (req, res) => {
+  const { id } = req.params;
+
+  deleteUserById(id)
+    .then((deletedUser) => {
+      if (!deletedUser)
+        return res.status(404).send({ message: "User not found" });
+      res.status(204).send();
+    })
+    .catch((error) => res.status(500).send({ message: error.message }));
+});
+
+app.put("/users/:id", (req, res) => {
+  const { id } = req.params;
+  const updatedData = req.body;
+
+  userModel
+    .findByIdAndUpdate(id, { $set: updatedData }, { new: true })
+    .then((updatedUser) => {
+      if (!updatedUser)
+        return res.status(404).send({ message: "User not found" });
+      res.send(updatedUser);
+    })
+    .catch((error) => res.status(500).send({ message: error.message }));
+});
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
+
+//const findUserByName = (name) => {
+/* return users["users_list"].filter((user) => user["name"] === name);
 };
 
 app.get("/users", (req, res) => {
@@ -119,3 +200,4 @@ app.get("/filtered-users", (req, res) => {
   result = { users_list: result };
   res.send(result);
 });
+ */

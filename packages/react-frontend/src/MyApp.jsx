@@ -26,7 +26,7 @@ function updateList(person) {
 
 function removeOneCharacter(index) {
   const userToDelete = characters[index];
-  const url = `http://localhost:8000/users/${userToDelete.id}`;
+  const url = `http://localhost:8000/users/${userToDelete._id}`;
   fetch(url, { method: "DELETE" })
     .then((res) => {
       if (res.status === 200 || res.status === 204) {
